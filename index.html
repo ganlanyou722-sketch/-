@@ -1,0 +1,1396 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CareFlow · eufy 摄像头智能售后演示</title>
+<link rel="stylesheet" href="https://miaoda.feishu.cn/fonts/css2?family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap">
+<style>
+  :root{
+    --blue:#0b6efd; --blue-d:#0a58d4; --blue-50:#eef5ff; --blue-100:#dceaff;
+    --green:#1f9d63; --green-50:#e7f6ee;
+    --orange:#e8850a; --orange-50:#fef3e2;
+    --yellow:#b26a00; --yellow-50:#fef8e7;
+    --red:#e0343b; --red-50:#fdecee;
+    --purple:#7a5af8; --purple-50:#f1edff;
+    --ink:#1b1f26; --sub:#8a919e; --line:#ebedf1;
+    --bg:#f4f6f9; --card:#ffffff;
+    --r-lg:20px; --r-md:13px; --r-sm:10px;
+    --sh-sm:0 1px 2px rgba(16,24,40,.05);
+    --sh-md:0 6px 20px rgba(16,24,40,.07);
+    --sh-lg:0 18px 50px rgba(16,24,40,.14);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    font-family:"Noto Sans SC",-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
+    background:var(--bg); color:var(--ink); -webkit-font-smoothing:antialiased;
+    font-size:14px; line-height:1.6;
+  }
+  button{font-family:inherit;cursor:pointer;border:none;background:none}
+  .hidden{display:none !important}
+  .view{display:none}
+  .view.active{display:block}
+
+  .topbar{
+    height:64px; background:#fff; border-bottom:1px solid var(--line);
+    display:flex; align-items:center; gap:14px; padding:0 28px; position:sticky; top:0; z-index:40;
+  }
+  .brand{display:flex;align-items:center;gap:11px;font-weight:900;font-size:18px;letter-spacing:.2px}
+  .brand .logo{width:38px;height:38px;border-radius:11px;background:linear-gradient(135deg,#1c8efd,#0b5bd6);display:grid;place-items:center;color:#fff}
+  .brand small{display:block;font-size:11px;font-weight:500;color:var(--sub);letter-spacing:1.5px}
+  .topbar .spacer{flex:1}
+  .identity-pill{display:flex;align-items:center;gap:9px;background:var(--bg);border:1px solid var(--line);border-radius:999px;padding:6px 14px 6px 8px;font-size:13px;font-weight:500}
+  .identity-pill .av{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;color:#fff}
+  .av.customer{background:linear-gradient(135deg,#2bb673,#15805a)}
+  .av.agent{background:linear-gradient(135deg,#1c8efd,#0a58d4)}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;border-radius:var(--r-sm);padding:10px 18px;font-weight:500;font-size:14px;transition:.16s;border:1px solid transparent;white-space:nowrap}
+  .btn-primary{background:var(--blue);color:#fff;box-shadow:0 4px 12px rgba(11,110,253,.28)}
+  .btn-primary:hover{background:var(--blue-d)}
+  .btn-ghost{background:#fff;border-color:var(--line);color:var(--ink)}
+  .btn-ghost:hover{background:var(--bg)}
+  .btn-soft{background:var(--blue-50);color:var(--blue)}
+  .btn-soft:hover{background:var(--blue-100)}
+  .btn-purple{background:var(--purple);color:#fff;box-shadow:0 4px 12px rgba(122,90,248,.28)}
+  .btn-purple:hover{filter:brightness(1.05)}
+  .btn-lg{padding:14px 26px;font-size:15px;border-radius:var(--r-md)}
+  .btn-block{width:100%}
+  .btn-sm{padding:7px 13px;font-size:13px}
+  .btn:disabled{opacity:.5;cursor:not-allowed}
+
+  .tag{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:500;padding:3px 10px;border-radius:999px}
+  .tag .dot{width:6px;height:6px;border-radius:50%}
+  .t-green{background:var(--green-50);color:var(--green)} .t-green .dot{background:var(--green)}
+  .t-blue{background:var(--blue-50);color:var(--blue)} .t-blue .dot{background:var(--blue)}
+  .t-orange{background:var(--orange-50);color:var(--orange)} .t-orange .dot{background:var(--orange)}
+  .t-red{background:var(--red-50);color:var(--red)} .t-red .dot{background:var(--red)}
+  .t-gray{background:#f1f3f6;color:var(--sub)} .t-gray .dot{background:var(--sub)}
+  .t-purple{background:var(--purple-50);color:var(--purple)} .t-purple .dot{background:var(--purple)}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--sh-sm)}
+  .card-h{padding:16px 20px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+  .card-h h3{font-size:15px;font-weight:700}
+  .card-h .spacer{flex:1}
+  .card-b{padding:20px}
+
+  #toastWrap{position:fixed;top:80px;right:26px;z-index:120;display:flex;flex-direction:column;gap:11px}
+  .toast{display:flex;align-items:flex-start;gap:11px;background:#fff;border:1px solid var(--line);border-radius:var(--r-md);box-shadow:var(--sh-lg);padding:14px 17px;min-width:300px;max-width:380px;animation:slideIn .28s ease}
+  @keyframes slideIn{from{transform:translateX(30px);opacity:0}to{transform:none;opacity:1}}
+  .toast .ic{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;flex-shrink:0}
+  .toast h4{font-size:14px;font-weight:700;margin-bottom:2px}
+  .toast p{font-size:12.5px;color:var(--sub)}
+  .ic.ok{background:var(--green-50);color:var(--green)} .ic.warn{background:var(--orange-50);color:var(--orange)}
+  .ic.err{background:var(--red-50);color:var(--red)} .ic.info{background:var(--blue-50);color:var(--blue)}
+
+  #modalMask{position:fixed;inset:0;background:rgba(17,24,39,.42);backdrop-filter:blur(3px);z-index:100;display:none;align-items:center;justify-content:center;padding:24px}
+  #modalMask.show{display:flex}
+  .modal{background:#fff;border-radius:24px;box-shadow:var(--sh-lg);width:520px;max-width:100%;max-height:88vh;overflow:auto;animation:pop .24s ease}
+  @keyframes pop{from{transform:scale(.95);opacity:0}to{transform:none;opacity:1}}
+  .modal-h{padding:24px 26px 0;display:flex;gap:14px;align-items:flex-start}
+  .modal-h .mic{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;flex-shrink:0}
+  .modal-h h3{font-size:19px;font-weight:900}
+  .modal-h p{color:var(--sub);font-size:13px;margin-top:3px}
+  .modal-x{margin-left:auto;color:var(--sub);padding:4px;border-radius:8px}
+  .modal-x:hover{background:var(--bg)}
+  .modal-b{padding:20px 26px}
+  .modal-f{padding:16px 26px 24px;display:flex;justify-content:flex-end;gap:11px}
+  .field{margin-bottom:15px}
+  .field label{display:block;font-size:13px;font-weight:500;margin-bottom:6px;color:#3a414c}
+  .input{width:100%;border:1px solid var(--line);border-radius:var(--r-sm);padding:11px 13px;font-size:14px;font-family:inherit;background:#fafbfc}
+  .input:focus{outline:none;border-color:var(--blue);background:#fff;box-shadow:0 0 0 3px var(--blue-50)}
+  .info-row{display:flex;align-items:center;gap:12px;background:#f8fafc;border:1px solid var(--line);border-radius:var(--r-md);padding:13px 16px;margin-bottom:10px}
+  .info-row .k{color:var(--sub);font-size:13px;min-width:84px}
+  .info-row .v{font-weight:600;font-size:14px}
+  .info-row .spacer{flex:1}
+
+  #view-home{min-height:100vh;background:
+    radial-gradient(900px 420px at 15% -5%,#dceaff 0%,rgba(220,234,255,0) 60%),
+    radial-gradient(800px 400px at 100% 0%,#e6f6ee 0%,rgba(230,246,238,0) 55%),var(--bg)}
+  .home-wrap{max-width:1180px;margin:0 auto;padding:60px 28px 80px}
+  .home-head{text-align:center;margin-bottom:46px}
+  .home-head .kicker{display:inline-flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--line);border-radius:999px;padding:7px 16px;font-size:12.5px;color:var(--blue);font-weight:500;box-shadow:var(--sh-sm);margin-bottom:24px}
+  .home-head h1{font-size:38px;font-weight:900;letter-spacing:.5px;line-height:1.28}
+  .home-head h1 span{background:linear-gradient(90deg,#0b6efd,#1fae70);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .home-head p{color:var(--sub);font-size:16px;margin-top:16px}
+  .role-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:22px}
+  .role-card{background:#fff;border:1px solid var(--line);border-radius:24px;padding:32px 28px;box-shadow:var(--sh-md);transition:.25s;cursor:pointer;position:relative;overflow:hidden}
+  .role-card:hover{transform:translateY(-6px);box-shadow:var(--sh-lg);border-color:#d3d9e2}
+  .role-card::after{content:"";position:absolute;right:-40px;top:-40px;width:150px;height:150px;border-radius:50%;opacity:.12}
+  .role-card.customer::after{background:var(--green)} .role-card.agent::after{background:var(--blue)} .role-card.evo::after{background:var(--purple)}
+  .role-ic{width:60px;height:60px;border-radius:17px;display:grid;place-items:center;margin-bottom:20px}
+  .role-ic.customer{background:var(--green-50);color:var(--green)} .role-ic.agent{background:var(--blue-50);color:var(--blue)} .role-ic.evo{background:var(--purple-50);color:var(--purple)}
+  .role-card h2{font-size:21px;font-weight:900;margin-bottom:10px}
+  .role-card p{color:var(--sub);font-size:13.5px;margin-bottom:22px;min-height:60px}
+  .role-card .feats{list-style:none;margin-bottom:24px;display:flex;flex-direction:column;gap:9px}
+  .role-card .feats li{display:flex;gap:9px;align-items:center;font-size:13px;color:#4a515d}
+  .role-card .feats svg{color:var(--green);flex-shrink:0}
+  .role-card.agent .feats svg{color:var(--blue)} .role-card.evo .feats svg{color:var(--purple)}
+
+  .page-wrap{max-width:1360px;margin:0 auto;padding:26px 28px}
+  .page-title{display:flex;align-items:center;gap:14px;margin-bottom:20px}
+  .page-title h2{font-size:22px;font-weight:900}
+  .page-title .spacer{flex:1}
+
+  /* 客户页 / 自进化页：左对话 + 右内部 */
+  .cust-grid,.evo-grid{display:grid;grid-template-columns:1fr 380px;gap:22px;align-items:start}
+  .evo-grid{grid-template-columns:1fr 404px}
+  .side-inner{display:flex;flex-direction:column;gap:20px}
+  .chat-box{display:flex;flex-direction:column;height:700px}
+  .chat-body{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:13px;background:linear-gradient(#fbfcfe,#f6f8fb)}
+  .msg{max-width:86%;padding:11px 14px;border-radius:15px;font-size:13.5px;animation:fadeUp .25s ease}
+  @keyframes fadeUp{from{transform:translateY(8px);opacity:0}to{transform:none;opacity:1}}
+  .msg.ai{align-self:flex-start;background:#fff;border:1px solid var(--line);border-top-left-radius:5px}
+  .msg.user{align-self:flex-end;background:var(--blue);color:#fff;border-top-right-radius:5px}
+  .msg.sys{align-self:center;background:var(--yellow-50);color:var(--yellow);font-size:12.5px;border:1px solid #f6e3b4;border-radius:10px;max-width:92%;text-align:center}
+  /* 会话时间分隔条（客户可见，自然语言，不含内部术语） */
+  .msg.split{align-self:center;background:var(--blue-50);color:var(--blue);border:1px dashed #b9d6ff;border-radius:999px;font-size:12px;font-weight:600;padding:6px 16px;max-width:94%;text-align:center}
+  /* 内嵌在对话流里的方案卡：客户视角 */
+  .msg.plan{align-self:flex-start;width:min(580px,98%);max-width:98%;padding:0;background:transparent;border:none}
+  .msg.plan .plan-card{margin:0;box-shadow:var(--sh-md)}
+  .chat-options{padding:13px 16px;border-top:1px solid var(--line);display:flex;flex-wrap:wrap;gap:9px;background:#fff;border-bottom-left-radius:var(--r-lg);border-bottom-right-radius:var(--r-lg);min-height:58px;align-content:center}
+  .chip{border:1px solid #d7e3fb;background:var(--blue-50);color:var(--blue);border-radius:999px;padding:8px 15px;font-size:13px;font-weight:500;transition:.15s}
+  .chip:hover{background:var(--blue);color:#fff}
+  .chip.danger{border-color:#f3c3c6;background:var(--red-50);color:var(--red)}
+  .chip.danger:hover{background:var(--red);color:#fff}
+  .chip.ghost{border-color:var(--line);background:#fff;color:var(--ink)}
+  .chip.ghost:hover{background:var(--bg)}
+  .typing{display:inline-flex;gap:4px;padding:4px 0}
+  .typing span{width:7px;height:7px;border-radius:50%;background:var(--sub);animation:blink 1.2s infinite}
+  .typing span:nth-child(2){animation-delay:.2s}.typing span:nth-child(3){animation-delay:.4s}
+  @keyframes blink{0%,60%,100%{opacity:.25}30%{opacity:1}}
+
+  .verify-list{display:flex;flex-direction:column;gap:11px;margin-top:2px}
+  .verify-item{display:flex;align-items:center;gap:11px;font-size:13.5px;color:var(--sub)}
+  .verify-item .vi{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;flex-shrink:0;background:#eef0f3;color:#b8bec8}
+  .verify-item.done{color:var(--ink)} .verify-item.done .vi{background:var(--green-50);color:var(--green)}
+  .verify-item.run .vi{background:var(--blue-50);color:var(--blue);animation:pulse 1s infinite}
+  @keyframes pulse{50%{box-shadow:0 0 0 5px rgba(11,110,253,.12)}}
+
+  /* 方案卡（客户版） */
+  .plan-card{border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden;background:#fff;animation:fadeUp .35s ease}
+  .plan-card.recommend{border-color:#b9d6ff;box-shadow:0 10px 30px rgba(11,110,253,.12)}
+  .plan-card.spent{opacity:.55;pointer-events:none}
+  .plan-top{padding:15px 18px;display:flex;align-items:center;gap:11px;background:linear-gradient(90deg,#f2f7ff,#fbfdff);border-bottom:1px solid var(--line)}
+  .plan-top h4{font-size:16px;font-weight:800}
+  .plan-top .spacer{flex:1}
+  .plan-mid{padding:16px 18px;display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .plan-meta{display:flex;flex-direction:column;gap:3px}
+  .plan-meta .mk{font-size:11.5px;color:var(--sub)}
+  .plan-meta .mv{font-size:14.5px;font-weight:700}
+  .plan-desc{grid-column:1/-1;font-size:13px;color:#565e6b;background:#f8fafc;border-radius:var(--r-sm);padding:11px 13px}
+  .plan-foot{padding:0 18px 16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .plan-foot .spacer{flex:1}
+  .plan-state{font-size:12.5px;font-weight:600;display:flex;align-items:center;gap:6px}
+  .ps-done{color:var(--green)} .ps-wait{color:var(--orange)}
+  .link-btn{display:inline-flex;align-items:center;gap:6px;color:var(--sub);font-size:13px;padding:9px 10px;border-radius:9px}
+  .link-btn:hover{color:var(--blue);background:var(--blue-50)}
+  .privacy-note{display:flex;gap:9px;align-items:flex-start;font-size:12px;color:#565e6b;background:var(--green-50);border:1px solid #c9e8d8;border-radius:var(--r-sm);padding:10px 12px;margin-top:4px}
+  .privacy-note svg{color:var(--green);flex-shrink:0;margin-top:1px}
+
+  /* 内部阶梯（右栏） */
+  .escalator .et-title{font-size:11px;color:var(--sub);display:flex;align-items:center;gap:6px;margin-bottom:13px;text-transform:uppercase;letter-spacing:.6px;font-weight:600}
+  .et-track{display:flex;align-items:center}
+  .es-step{display:flex;flex-direction:column;align-items:center;gap:6px;flex:1;text-align:center}
+  .es-step .es-ic{width:34px;height:34px;border-radius:50%;background:#eceff3;color:#aab1bc;display:grid;place-items:center}
+  .es-step .es-l{font-size:11px;color:var(--sub);line-height:1.3}
+  .es-step.skip .es-ic{background:#eef0f3;color:#b8bec8}
+  .es-step.skip .es-l{text-decoration:line-through}
+  .es-step.current .es-ic{background:var(--blue);color:#fff;box-shadow:0 5px 14px rgba(11,110,253,.35)}
+  .es-step.current .es-l{color:var(--blue);font-weight:700}
+  .es-step.accepted .es-ic{background:var(--green);color:#fff}
+  .es-step.accepted .es-l{color:var(--green);font-weight:700}
+  .es-step.wait .es-ic{background:var(--orange);color:#fff}
+  .es-step.wait .es-l{color:var(--orange);font-weight:700}
+  .es-line{flex:0 0 18px;height:2px;background:#dde1e7}
+  .es-line.on{background:var(--green)}
+
+  /* 内部视角徽章 */
+  .inner-badge{font-size:11px;font-weight:700;color:var(--orange);background:var(--orange-50);border:1px solid #f3d9ad;border-radius:999px;padding:3px 10px;white-space:nowrap}
+  .ip-kv{display:grid;grid-template-columns:88px 1fr;gap:8px 12px;font-size:13px;margin-bottom:6px}
+  .ip-kv .k{color:var(--sub)} .ip-kv .v{font-weight:600}
+  .next-box{background:var(--blue-50);border:1px dashed #9cc2ff;border-radius:var(--r-md);padding:14px;text-align:center}
+  .next-box p{font-size:12.5px;color:var(--blue-d);margin-bottom:10px}
+  .human-box{background:var(--purple-50);border:1px solid #ddd4fb;border-radius:var(--r-md);padding:14px}
+  .human-box h5{font-size:13px;font-weight:800;color:var(--purple);margin-bottom:8px}
+  .human-box .opt{display:flex;align-items:flex-start;gap:9px;padding:9px 10px;border:1px solid #e2dbfb;background:#fff;border-radius:var(--r-sm);margin-bottom:8px;cursor:pointer;font-size:12.5px}
+  .human-box .opt.sel{border-color:var(--purple);background:#f6f3ff;box-shadow:0 0 0 2px rgba(122,90,248,.12)}
+  .kb-table{width:100%;border-collapse:collapse;font-size:12.5px}
+  .kb-table th{text-align:left;color:var(--sub);font-weight:600;font-size:11.5px;padding:7px 8px;border-bottom:1px solid var(--line)}
+  .kb-table td{padding:9px 8px;border-bottom:1px solid #f2f4f7;vertical-align:top}
+  .ver-flow{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+  .ver{font-size:11.5px;font-weight:700;padding:2px 8px;border-radius:7px}
+  .ver.v1{background:#eef0f3;color:#8a919e}
+  .ver.v2{background:var(--green-50);color:var(--green)}
+  .ver.v2.manual{background:var(--purple-50);color:var(--purple)}
+  .ver.rolled{background:var(--red-50);color:var(--red)}
+  .mini-link{font-size:12px;color:var(--blue);background:var(--blue-50);border-radius:7px;padding:3px 9px;font-weight:600}
+  .mini-link:hover{background:var(--blue);color:#fff}
+  .mini-link.warn{color:var(--red);background:var(--red-50)}
+  .tl{position:relative;padding-left:22px}
+  .tl::before{content:"";position:absolute;left:6px;top:6px;bottom:6px;width:2px;background:#e6e9ee}
+  .tl-i{position:relative;padding-bottom:13px;font-size:12.8px}
+  .tl-i:last-child{padding-bottom:0}
+  .tl-i::before{content:"";position:absolute;left:-20px;top:5px;width:10px;height:10px;border-radius:50%;background:#fff;border:2.5px solid var(--blue)}
+  .tl-i .tt{font-weight:700} .tl-i .td{color:var(--sub);font-size:12.3px}
+  .tl-i.red::before{border-color:var(--red)} .tl-i.green::before{border-color:var(--green)}
+  .tl-i.purple::before{border-color:var(--purple)} .tl-i.gray::before{border-color:var(--sub)}
+
+  /* 演示控制条 */
+  .demo-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:#fff;border:1px solid var(--line);border-radius:var(--r-md);padding:12px 16px;margin-bottom:20px;box-shadow:var(--sh-sm)}
+  .demo-bar .dl{font-size:12px;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:.6px;margin-right:4px}
+  .demo-scn{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:999px;padding:8px 15px;font-size:13px;font-weight:600;background:#fff;color:var(--ink)}
+  .demo-scn.active{border-color:var(--purple);background:var(--purple);color:#fff;box-shadow:0 4px 12px rgba(122,90,248,.28)}
+  .demo-scn .n{width:19px;height:19px;border-radius:50%;background:var(--purple-50);color:var(--purple);display:grid;place-items:center;font-size:11.5px;font-weight:800}
+  .demo-scn.active .n{background:rgba(255,255,255,.25);color:#fff}
+  .demo-hint{font-size:12px;color:var(--sub);flex-basis:100%;margin-top:2px}
+
+  /* 后端链路（客户页右栏） */
+  .chain-nodes{display:flex;align-items:center;flex-wrap:wrap;padding-top:8px}
+  .cnode{display:flex;flex-direction:column;align-items:center;gap:7px;width:74px;text-align:center}
+  .cnode .ci{width:36px;height:36px;border-radius:11px;background:#eef0f3;color:#aab1bc;display:grid;place-items:center}
+  .cnode .cl{font-size:11px;color:var(--sub)}
+  .cnode.done .ci{background:var(--green-50);color:var(--green)} .cnode.done .cl{color:var(--ink)}
+  .cnode.block .ci{background:var(--red-50);color:var(--red)} .cnode.block .cl{color:var(--red);font-weight:600}
+  .cline{width:18px;height:2px;background:#dde1e7;margin-bottom:22px}
+  .cline.done{background:var(--green)}
+
+  /* 客服工作台 */
+  .agent-grid{display:grid;grid-template-columns:300px 1fr;gap:24px;align-items:start}
+  .case-list{padding:14px}
+  .case-item{border:1px solid var(--line);border-radius:var(--r-md);padding:13px 14px;margin-bottom:10px;cursor:pointer;transition:.15s}
+  .case-item:hover{background:var(--bg)}
+  .case-item.sel{border-color:var(--blue);background:var(--blue-50)}
+  .case-item .ci-top{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+  .case-item .ci-top .cid{font-size:12px;font-weight:700}
+  .case-item .ci-desc{font-size:12.5px;color:var(--sub)}
+  .lookup{padding:14px;border-top:1px solid var(--line)}
+  .lookup .lrow{display:flex;gap:8px}
+  .lookup input{flex:1;border:1px solid var(--line);border-radius:var(--r-sm);padding:9px 11px;font-size:13px}
+  .lookup input:focus{outline:none;border-color:var(--blue)}
+  .tk-head{padding:22px 26px;border-bottom:1px solid var(--line);display:flex;align-items:flex-start;gap:16px}
+  .tk-head h2{font-size:19px;font-weight:900;margin-bottom:6px}
+  .tk-head .meta{display:flex;gap:8px;flex-wrap:wrap}
+  .tk-sec{padding:20px 26px;border-bottom:1px solid #f2f4f7}
+  .tk-sec h4{font-size:13px;font-weight:800;color:#565e6b;margin-bottom:14px;display:flex;align-items:center;gap:8px;text-transform:uppercase;letter-spacing:.6px}
+  .fact-grid{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+  .fact{background:#f8fafc;border:1px solid var(--line);border-radius:var(--r-md);padding:12px 14px}
+  .fact .fk{font-size:11.5px;color:var(--sub);display:flex;align-items:center;gap:5px}
+  .fact .fv{font-size:14px;font-weight:600;margin-top:3px}
+  .conf{font-size:11px;font-weight:600;color:var(--green)}
+  .masked{display:inline-flex;align-items:center;gap:8px}
+  .reveal-btn{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;color:var(--blue);background:var(--blue-50);border-radius:7px;padding:3px 9px;font-weight:500}
+  .reveal-btn:hover{background:var(--blue);color:#fff}
+  .reason-box{background:var(--orange-50);border:1px solid #f3d9ad;border-radius:var(--r-md);padding:13px 16px;font-size:13px;color:#8a5a17}
+  .action-bar{padding:20px 26px;display:flex;gap:11px;flex-wrap:wrap}
+  .audit{padding:20px 26px}
+  .audit .tl-i::before{border-color:var(--green)}
+  .audit .tl-i.red::before{border-color:var(--red)}
+  .audit .tl-i.purple::before{border-color:var(--purple)}
+
+  @media(max-width:1080px){
+    .role-grid{grid-template-columns:1fr}
+    .cust-grid,.evo-grid,.agent-grid{grid-template-columns:1fr}
+    .chat-box{height:560px}
+    .fact-grid,.plan-mid{grid-template-columns:1fr}
+    .home-head h1{font-size:28px}
+  }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <span class="logo">
+      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 3 7v6c0 5 3.8 8 9 9 5.2-1 9-4 9-9V7l-9-5Z"/></svg>
+    </span>
+    <div>CareFlow<small>eufy 摄像头售后 · 方案演示</small></div>
+  </div>
+  <span class="spacer"></span>
+  <div id="topIdentity"></div>
+  <button class="btn btn-purple btn-sm" onclick="go('evolution')">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M3 12h18"/><circle cx="12" cy="12" r="9"/></svg>
+    自进化中心
+  </button>
+  <button class="btn btn-ghost btn-sm" onclick="go('home')">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h18M3 12l6-6M3 12l6 6"/></svg>
+    切换身份
+  </button>
+</header>
+
+<!-- ================= 首页 ================= -->
+<section class="view" id="view-home">
+  <div class="home-wrap">
+    <div class="home-head">
+      <span class="kicker">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+        Anker 首届黑客松 · 智能服务赛道 · eufy 摄像头
+      </span>
+      <h1>把一次摄像头售后，变成一张<span>可比较 · 可执行 · 可追溯</span>的方案卡</h1>
+      <p>单次服务看"方案卡空间闭环"，跨会话看"自进化时间闭环"，请选择体验入口</p>
+    </div>
+    <div class="role-grid">
+      <div class="role-card customer" onclick="go('customer')">
+        <div class="role-ic customer">
+          <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6 8-6s8 2 8 6"/></svg>
+        </div>
+        <h2>我是客户 · 单次服务</h2>
+        <p>在对话中直接收到 AI 生成的方案卡并在线办理（空间闭环 · 单轮）</p>
+        <ul class="feats">
+          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>方案卡就在聊天窗口内，直接选择办理</li>
+          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>逐级升级，高风险自动转人工</li>
+          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>摄像头画面受保护，不越权承诺</li>
+        </ul>
+        <button class="btn btn-primary btn-lg btn-block">进入客户服务台
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </button>
+      </div>
+
+      <div class="role-card evo" onclick="go('evolution')">
+        <div class="role-ic evo">
+          <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg>
+        </div>
+        <h2>自进化中心 · 多轮</h2>
+        <p>跨会话演示：复联自动换方案、人工经验沉淀复用（时间闭环）</p>
+        <ul class="feats">
+          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>同一问题复联，方案自动从 v1 升级 v2</li>
+          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>人工改判沉淀，下次 AI 优先采用</li>
+          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>受控发布、可回滚，全程可审计</li>
+        </ul>
+        <button class="btn btn-purple btn-lg btn-block">进入自进化中心
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </button>
+      </div>
+
+      <div class="role-card agent" onclick="go('agent')">
+        <div class="role-ic agent">
+          <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V7l7-4 7 4v14"/><path d="M9 10h.01M9 14h.01M15 10h.01M15 14h.01"/></svg>
+        </div>
+        <h2>我是人工客服</h2>
+        <p>接管 AI 未结案件，基于接续卡零重问、按权限审批办理</p>
+        <ul class="feats">
+          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>已核实事实随案移交，无需重问</li>
+          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>敏感字段掩码，操作按权限留痕</li>
+          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>人工改判进入自进化归因</li>
+        </ul>
+        <button class="btn btn-primary btn-lg btn-block">进入客服工作台
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 客户页（单次服务 · 方案卡在对话内） ================= -->
+<section class="view" id="view-customer">
+  <div class="page-wrap">
+    <div class="page-title">
+      <h2>客户服务台</h2>
+      <span class="tag t-blue"><span class="dot"></span>单次服务 · 空间闭环</span>
+      <span class="spacer"></span>
+      <span class="tag t-green"><span class="dot"></span>订单在保</span>
+    </div>
+    <div class="cust-grid">
+      <div class="card chat-box">
+        <div class="card-h">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          <h3>智能售后助手</h3><span class="spacer"></span><span class="tag t-green"><span class="dot"></span>在线</span>
+        </div>
+        <div class="chat-body" id="chatBody"></div>
+        <div class="chat-options" id="chatOptions"></div>
+      </div>
+
+      <div class="side-inner">
+        <div class="card">
+          <div class="card-h"><h3>后端处理链路</h3><span class="spacer"></span><span class="inner-badge">内部视角 · 不对客户展示</span></div>
+          <div class="card-b"><div class="chain-nodes" id="chainNodes"></div></div>
+        </div>
+        <div class="card">
+          <div class="card-h"><h3>方案升级阶梯</h3><span class="spacer"></span><span class="inner-badge">内部排序</span></div>
+          <div class="card-b" id="escalatorArea"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 自进化中心（多轮 · 跨会话） ================= -->
+<section class="view" id="view-evolution">
+  <div class="page-wrap">
+    <div class="page-title">
+      <h2>自进化中心</h2>
+      <span class="tag t-purple"><span class="dot"></span>多轮 · 跨会话 · 时间闭环</span>
+      <span class="spacer"></span>
+    </div>
+
+    <div class="demo-bar">
+      <span class="dl">演示路径</span>
+      <button class="demo-scn" id="scnbtn-s1" onclick="resetEvo('s1')"><span class="n">1</span>自助咨询 · 复联自动换方案</button>
+      <button class="demo-scn" id="scnbtn-s2" onclick="resetEvo('s2')"><span class="n">2</span>退换货 · 一次解决（Good 对照）</button>
+      <button class="demo-scn" id="scnbtn-s3" onclick="resetEvo('s3')"><span class="n">3</span>转人工 · 人工方案沉淀复用</button>
+      <button class="btn btn-ghost btn-sm" onclick="resetEvo(evo.scene)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg>
+        重置本路径
+      </button>
+      <button class="btn btn-purple btn-sm" onclick="autoPlayCurrent()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+        自动播放本路径
+      </button>
+      <div class="demo-hint">左侧为客户在聊天窗口内的真实所见（简洁、不含任何内部判据）；右侧为系统内部的命中、归因与策略版本演进。点击底部/右侧的"时间快进"按钮推进跨会话。</div>
+    </div>
+
+    <div class="evo-grid">
+      <div class="card chat-box">
+        <div class="card-h">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--purple)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          <h3>客户对话</h3><span class="spacer"></span><span class="tag t-green"><span class="dot"></span>C 端视角</span>
+        </div>
+        <div class="chat-body" id="evoChatBody"></div>
+        <div class="chat-options" id="evoChatOptions"></div>
+      </div>
+
+      <div class="side-inner" id="evoInner"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 客服页 ================= -->
+<section class="view" id="view-agent">
+  <div class="page-wrap">
+    <div class="page-title">
+      <h2>客服工作台</h2>
+      <span class="tag t-blue"><span class="dot"></span>一线坐席 · 工号 A1024</span>
+      <span class="spacer"></span>
+      <span class="tag t-orange"><span class="dot"></span>1 个待接管</span>
+    </div>
+    <div class="agent-grid">
+      <div class="card">
+        <div class="card-h"><h3>摄像头案件队列</h3></div>
+        <div class="case-list" id="caseList"></div>
+        <div class="lookup">
+          <label style="font-size:12px;color:var(--sub);display:block;margin-bottom:8px">按工单号查询（归属校验）</label>
+          <div class="lrow">
+            <input id="lookupInput" placeholder="如 TK-20261008-001">
+            <button class="btn btn-primary btn-sm" onclick="lookupTicket()">查询</button>
+          </div>
+        </div>
+      </div>
+      <div class="card" id="takeoverCard"></div>
+    </div>
+  </div>
+</section>
+
+<div id="toastWrap"></div>
+<div id="modalMask"><div class="modal" id="modalBox"></div></div>
+
+<script>
+/* ================= 公共数据 ================= */
+const CUSTOMER = {name:"张三", level:"VIP", phone:"13812345678", maskedPhone:"138****5678",
+                  email:"zhangsan@example.com", maskedEmail:"z***@example.com"};
+const ORDER = {id:"VO-2026-0312", product:"eufyCam S350 双摄套装", model:"eufyCam S350",
+               purchase:"2026-03-12", price:2199, status:"在保（2 年保修）", channel:"eufy 官方商城"};
+
+/* 退换货阶梯（内部含 tier；客户卡片只显示客户语言的办理方式） */
+const PLANS = [
+  {tier:1, title:"补发配件 + 排障指引", fee:"0 元", eta:"1–2 个工作日",
+   clientTag:"可立即办理",
+   desc:"优先排除供电、安装与网络问题，免费补发电源 / 太阳能板 / 支架 / 存储卡，并提供排障指引。",
+   pros:"最快、无需寄回", cons:"若为机身故障仍需换新",
+   check:"请确认您已按指引完成重启、擦拭镜头、检查供电与 2.4GHz Wi-Fi，问题仍未解决？"},
+  {tier:2, title:"保修换新摄像头", fee:"0 元", eta:"3–5 个工作日",
+   clientTag:"确认后办理",
+   desc:"经核实符合保修条件，回收故障摄像头并寄出新机，双向物流由我们承担。",
+   pros:"零成本、彻底解决", cons:"需寄回、等待数日",
+   check:"请确认换新方案确实不适用，或您更希望直接退款？"},
+  {tier:3, title:"申请退款", fee:"全额 2199 元", eta:"专员确认后 3–5 日",
+   clientTag:"需专员确认",
+   desc:"该笔退款需专员人工确认后办理，已核实信息会一并移交，无需重复描述。",
+   pros:"直接全额退款", cons:"需人工确认、等待", check:""}
+];
+const STEP_LABELS = ["排障 · 补发配件","保修换新","申请退款"];
+
+/* 摄像头单轮剧本 */
+const SCRIPT = [
+  {ai:"您好，我是 eufy 智能售后助手。请描述您摄像头遇到的问题，我来帮您处理。",
+   options:[
+     {t:"画面 / 夜视异常",n:1},
+     {t:"摄像头离线 / 连不上",n:1},
+     {t:"设备发热 / 有焦糊味",n:"danger",cls:"danger"},
+     {t:"其他问题",n:"other"}]},
+  {ai:"好的，麻烦确认一下您的摄像头型号（可在设备背面标签查看）。",
+   options:[{t:"eufyCam S350",n:2},{t:"其他型号",n:2}]},
+  {ai:"您已经尝试过哪些操作？",
+   options:[
+     {t:"重启并擦拭过镜头",n:3},
+     {t:"重连过 Wi-Fi / 路由",n:3},
+     {t:"你直接调取我摄像头画面看看？",n:"feed"}]},
+  {ai:"摄像头安装在什么环境？是否有进水、摔落或明显磕碰？这有助于判断保修范围。",
+   options:[
+     {t:"正常安装，无进水摔落",n:4},
+     {t:"户外淋雨 / 有磕碰",n:"damage",cls:"danger"}]},
+  {ai:"已了解。正在为您核实订单与保修资格，请稍候…", verify:true, options:[]}
+];
+const CHAIN = ["意图识别","规则校验","权限分级","生成方案卡"];
+const CASES = [
+  {id:"TK-20261008-001", name:"张三", desc:"夜视异常 · 逐级升级后申请退款", status:"待接管", mine:true},
+  {id:"TK-20261008-002", name:"李四", desc:"摄像头频繁离线", status:"处理中", mine:false},
+  {id:"TK-20261008-003", name:"王五", desc:"摄像头存储卡报错", status:"已分配", mine:false}
+];
+
+/* ================= 路由 ================= */
+function go(route){ location.hash = "#/"+route; }
+function renderRoute(){
+  const r = (location.hash.replace("#/","")||"home").split("?")[0];
+  document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));
+  const el = document.getElementById("view-"+r);
+  if(el) el.classList.add("active");
+  renderTopIdentity(r);
+  if(r==="customer") initCustomer();
+  if(r==="agent") initAgent();
+  if(r==="evolution") initEvo();
+  window.scrollTo(0,0);
+}
+window.addEventListener("hashchange",renderRoute);
+function renderTopIdentity(r){
+  const box = document.getElementById("topIdentity");
+  if(r==="customer"){
+    box.innerHTML = '<span class="identity-pill"><span class="av customer"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6 8-6s8 2 8 6"/></svg></span>'+CUSTOMER.name+' · '+CUSTOMER.level+'</span>';
+  }else if(r==="agent"){
+    box.innerHTML = '<span class="identity-pill"><span class="av agent"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18M5 21V7l7-4 7 4v14"/></svg></span>客服 · 工号 A1024</span>';
+  }else if(r==="evolution"){
+    box.innerHTML = '<span class="identity-pill"><span class="av agent"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg></span>自进化工作台</span>';
+  }else box.innerHTML = "";
+}
+
+/* ================= Toast / Modal ================= */
+function toast(type,title,msg){
+  const icons = {ok:'<path d="M20 6 9 17l-5-5"/>',warn:'<path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/>',
+    err:'<circle cx="12" cy="12" r="9"/><path d="M15 9l-6 6M9 9l6 6"/>',info:'<circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v4h1"/>'};
+  const el = document.createElement("div");
+  el.className="toast";
+  el.innerHTML = '<span class="ic '+type+'"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">'+icons[type]+'</svg></span><div><h4>'+title+'</h4><p>'+msg+'</p></div>';
+  document.getElementById("toastWrap").appendChild(el);
+  setTimeout(()=>{el.style.transition=".3s";el.style.opacity="0";el.style.transform="translateX(20px)";setTimeout(()=>el.remove(),300);},4200);
+}
+function openModal(html){
+  document.getElementById("modalBox").innerHTML = html;
+  document.getElementById("modalMask").classList.add("show");
+}
+function closeModal(){document.getElementById("modalMask").classList.remove("show");}
+document.getElementById("modalMask").addEventListener("click",e=>{if(e.target.id==="modalMask")closeModal();});
+
+/* ================= 客户页（单次服务） ================= */
+let cstep=0, chatStarted=false;
+let offerLevel=0, offerStatus="active", offerCards=[];
+function initCustomer(){
+  chatStarted=true; cstep=0; offerLevel=0; offerStatus="active"; offerCards=[];
+  document.getElementById("chatBody").innerHTML="";
+  document.getElementById("chatOptions").innerHTML="";
+  renderChain("idle"); renderEscalator();
+  runStep(0);
+  if(location.hash.indexOf("demo=1")>=0) autoCustomer();
+}
+async function autoCustomer(){
+  await sleep(900);
+  choose(1,"画面 / 夜视异常"); await sleep(1200);
+  choose(2,"eufyCam S350"); await sleep(1200);
+  choose(3,"重启并擦拭过镜头"); await sleep(1200);
+  choose(4,"正常安装，无进水摔落"); await sleep(3400);
+}
+function addMsg(role,html){
+  const b=document.getElementById("chatBody");
+  const d=document.createElement("div");
+  d.className="msg "+role; d.innerHTML=html; b.appendChild(d); b.scrollTop=b.scrollHeight;
+  return d;
+}
+function typing(cb){
+  const b=document.getElementById("chatBody");
+  const d=document.createElement("div");
+  d.className="msg ai"; d.innerHTML='<span class="typing"><span></span><span></span><span></span></span>';
+  b.appendChild(d); b.scrollTop=b.scrollHeight;
+  setTimeout(()=>{d.remove();cb();},620);
+}
+function renderOptions(options){
+  const box=document.getElementById("chatOptions");
+  box.innerHTML = options.map(o=>'<button class="chip '+(o.cls||"")+'" onclick="choose(\''+o.n+'\',\''+o.t.replace(/'/g,"")+'\')">'+o.t+'</button>').join("");
+}
+function choose(n,label){
+  addMsg("user",label);
+  document.getElementById("chatOptions").innerHTML="";
+  if(n==="danger"){ typing(branchDanger); return; }
+  if(n==="damage"){ typing(branchDamage); return; }
+  if(n==="other"){ typing(branchOther); return; }
+  if(n==="feed"){ typing(branchFeed); return; }
+  cstep=n;
+  typing(()=>runStep(n));
+}
+function runStep(n){
+  const s=SCRIPT[n];
+  addMsg("ai",s.ai);
+  if(s.verify){ doVerify(); return; }
+  renderOptions(s.options);
+}
+function branchDanger(){
+  addMsg("ai","检测到您描述的是<b>设备发热 / 焦糊味等安全风险</b>，请立即断电、停止使用并远离易燃物。我已为您升级安全专员优先处理。");
+  renderChain("block",1);
+  setTimeout(()=>toast("warn","电力安全风险","已触发安全止损并转接专员"),700);
+  renderOptions([{t:"重新开始",n:0,cls:"ghost"}]);
+}
+function branchDamage(){
+  addMsg("ai","了解。若摄像头存在淋雨进水或磕碰，需要专员进一步核实。已为您转接人工客服，您此前提供的信息会一并移交，无需重复描述。");
+  renderChain("block",2);
+  setTimeout(()=>toast("warn","保修范围待核实","已转接人工，信息随案移交"),700);
+  renderOptions([{t:"重新开始",n:0,cls:"ghost"}]);
+}
+function branchOther(){
+  addMsg("ai","抱歉，该问题暂时没有匹配的现成答案。为避免给您不准确的信息，我已为您转接人工客服处理。");
+  renderChain("block",1);
+  setTimeout(()=>toast("warn","已转人工","人工客服将继续为您处理"),700);
+  renderOptions([{t:"重新开始",n:0,cls:"ghost"}]);
+}
+function branchFeed(){
+  addMsg("ai","为保护您的隐私，我<b>无法直接调取摄像头的实时画面或录像</b>。您可以在 eufy Security App 中点击对应设备查看，或把异常画面截图发给我，我来帮您判断。");
+  renderOptions(SCRIPT[2].options);
+}
+
+function doVerify(){
+  const holder=document.createElement("div");
+  holder.className="msg ai";
+  holder.innerHTML='<div class="verify-list">'+
+    '<div class="verify-item"><span class="vi"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>核验订单 '+ORDER.id+'</div>'+
+    '<div class="verify-item"><span class="vi"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>确认保修资格</div>'+
+    '<div class="verify-item"><span class="vi"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>校验可办理方案</div>'+
+    '</div>';
+  document.getElementById("chatBody").appendChild(holder); holder.scrollIntoView({block:"end"});
+  const items=holder.querySelectorAll(".verify-item");
+  renderChain("run");
+  let i=0;
+  (function tick(){
+    if(i>0) items[i-1].classList.remove("run");
+    if(i<items.length){
+      items[i].classList.add("run");
+      setTimeout(()=>{items[i].classList.remove("run");items[i].classList.add("done");i++;tick();},600);
+    }else setTimeout(showPlans,400);
+  })();
+}
+
+/* 方案卡直接出现在对话流里（客户视角） */
+function showPlans(){
+  offerLevel=0; offerStatus="active";
+  renderChain("done");
+  addMsg("ai","已为您匹配到<b>最快捷、成本最低</b>的处理方式，请在下方选择；如该方式无法解决，我再为您升级处理。");
+  appendOfferCard(0);
+  addMsg("ai",privacyNoteHTML());
+  renderEscalator();
+}
+function appendOfferCard(i){
+  const d=document.createElement("div");
+  d.className="msg plan";
+  d.innerHTML=clientPlanHTML(i);
+  document.getElementById("chatBody").appendChild(d);
+  offerCards[i]=d; d.scrollIntoView({block:"end"});
+  renderEscalator();
+}
+function clientTagHTML(p){
+  const cls = p.tier===1?'t-green':p.tier===2?'t-blue':'t-orange';
+  return '<span class="tag '+cls+'"><span class="dot"></span>'+p.clientTag+'</span>';
+}
+function clientPlanHTML(i){
+  const p=PLANS[i];
+  let foot="";
+  foot='<button class="link-btn" onclick="requestUpgrade()">该方式无法解决我的问题</button><span class="spacer"></span>';
+  const main = p.tier===1?'<button class="btn btn-primary btn-sm" onclick="acceptOffer()">接受，立即办理</button>'
+            : p.tier===2?'<button class="btn btn-primary btn-sm" onclick="acceptOffer()">接受换新并提交</button>'
+            : '<button class="btn btn-primary btn-sm" onclick="acceptOffer()">申请并转接专员</button>';
+  foot+=main;
+  return '<div class="plan-card recommend">'+
+    '<div class="plan-top"><h4>'+p.title+'</h4><span class="spacer"></span>'+clientTagHTML(p)+'</div>'+
+    '<div class="plan-mid">'+
+      '<div class="plan-meta"><span class="mk">费用</span><span class="mv">'+p.fee+'</span></div>'+
+      '<div class="plan-meta"><span class="mk">时效</span><span class="mv">'+p.eta+'</span></div>'+
+      '<div class="plan-desc">'+p.desc+'<br><span style="color:var(--green)">优势：'+p.pros+'</span>&nbsp;&nbsp;<span style="color:var(--sub)">权衡：'+p.cons+'</span></div>'+
+    '</div>'+
+    '<div class="plan-foot" data-foot>'+foot+'</div>'+
+  '</div>';
+}
+function planDoneHTML(state,cls,icon){
+  return '<span class="plan-state '+cls+'">'+icon+state+'</span>';
+}
+function setCardFoot(i,html){
+  const card=offerCards[i]; if(!card) return;
+  const foot=card.querySelector("[data-foot]"); if(foot) foot.innerHTML=html;
+}
+function spendCard(i){ const card=offerCards[i]; if(card) card.querySelector(".plan-card").classList.add("spent"); }
+function privacyNoteHTML(){
+  return '<div class="privacy-note"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 3 7v6c0 5 3.8 8 9 9 5.2-1 9-4 9-9V7l-9-5Z"/></svg><div>本次处理<b>未调取任何摄像头实时画面或录像</b>，影像仅可由您本人在 eufy Security App 查看。</div></div>';
+}
+function esState(i){
+  if(i<offerLevel) return "skip";
+  if(i===offerLevel){
+    if(offerStatus!=="accepted") return "current";
+    return PLANS[i].tier===3 ? "wait" : "accepted";
+  }
+  return "";
+}
+function renderEscalator(){
+  const area=document.getElementById("escalatorArea");
+  if(!area) return;
+  const ic='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>';
+  let h='<div class="escalator"><div class="et-title"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2 3 7v6c0 5 3.8 8 9 9 5.2-1 9-4 9-9V7l-9-5Z"/></svg>成本由低到高 · 客户每次仅见当前方案</div><div class="et-track">';
+  for(let i=0;i<3;i++){
+    h+='<div class="es-step '+esState(i)+'"><span class="es-ic">'+ic+'</span><span class="es-l">'+STEP_LABELS[i]+'</span></div>';
+    if(i<2) h+='<span class="es-line '+(i<offerLevel?'on':'')+'"></span>';
+  }
+  h+='</div></div>';
+  area.innerHTML=h;
+}
+function requestUpgrade(){
+  const p=PLANS[offerLevel];
+  openModal(
+    '<div class="modal-h"><span class="mic" style="background:var(--blue-50);color:var(--blue)"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5"/><path d="M9 16h6"/></svg></span><div><h3>确认该方式无法解决？</h3><p>升级前请先确认已按当前方式操作</p></div><button class="modal-x" onclick="closeModal()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>'+
+    '<div class="modal-b"><div class="reason-box" style="background:#f8fafc;border-color:var(--line);color:var(--ink)">'+p.check+'</div></div>'+
+    '<div class="modal-f"><button class="btn btn-ghost" onclick="closeModal()">取消</button><button class="btn btn-primary" onclick="doUpgrade()">仍未解决，升级处理</button></div>');
+}
+function doUpgrade(){
+  closeModal();
+  addMsg("user","该方式无法解决我的问题");
+  spendCard(offerLevel);
+  typing(()=>{
+    offerLevel++;
+    const np=PLANS[offerLevel];
+    if(np.tier===3){
+      addMsg("ai","很抱歉前两个方式都没能解决。最后为您评估了<b>退款方式</b>：这需要专员人工确认，已核实信息会一并移交，您无需重复描述。");
+    }else{
+      addMsg("ai","很抱歉没能解决您的问题，我已重新为您评估更彻底的处理方式，请在下方选择。");
+    }
+    appendOfferCard(offerLevel);
+  });
+}
+function acceptOffer(){
+  const i=offerLevel, p=PLANS[i];
+  addMsg("user", p.tier===3?"申请退款":"接受方案："+p.title);
+  offerStatus="accepted";
+  if(p.tier===1){
+    spendCard(i);
+    setCardFoot(i, planDoneHTML("已登记办理 · 预计 "+p.eta+" 发出","ps-done",okIcon()));
+    toast("ok","已为您登记补发",p.title+"，可在订单中查看进度");
+    addMsg("ai","已为您登记"+p.title+"，预计 "+p.eta+" 发出，进度可在订单页查看。如后续仍未解决，欢迎再次联系。");
+  }else if(p.tier===2){
+    openModal(
+      '<div class="modal-h"><span class="mic" style="background:var(--blue-50);color:var(--blue)"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg></span><div><h3>确认提交换新申请？</h3><p>'+p.title+' · 费用 '+p.fee+' · 时效 '+p.eta+'</p></div><button class="modal-x" onclick="closeModal()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>'+
+      '<div class="modal-b"><div class="info-row"><span class="k">回收设备</span><span class="v">eufyCam S350</span><span class="spacer"></span></div>'+
+      '<div class="info-row"><span class="k">物流</span><span class="v">双向免费，上门取件</span><span class="spacer"></span></div></div>'+
+      '<div class="modal-f"><button class="btn btn-ghost" onclick="closeModal()">取消</button><button class="btn btn-primary" onclick="confirmTier2()">确认提交</button></div>');
+  }else{
+    spendCard(i);
+    setCardFoot(i, planDoneHTML("已转接专员 · 等待确认","ps-wait",clockIcon()));
+    openModal(
+      '<div class="modal-h"><span class="mic" style="background:var(--orange-50);color:var(--orange)"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2"/><circle cx="10" cy="7" r="4"/><path d="M21 21v-2a4 4 0 0 0-3-3.9"/></svg></span><div><h3>已转接专员确认</h3><p>已核实信息随案移交，无需重复描述</p></div></div>'+
+      '<div class="modal-b"><div class="reason-box">「'+p.title+'」需专员人工确认，AI 无法直接完成，将由专员确认后办理。</div></div>'+
+      '<div class="modal-f"><button class="btn btn-ghost" onclick="closeModal()">稍后再说</button><button class="btn btn-primary" onclick="closeModal();go(\'agent\')">查看客服接续</button></div>');
+  }
+}
+function confirmTier2(){
+  closeModal();
+  const i=offerLevel;
+  spendCard(i);
+  setCardFoot(i, planDoneHTML("已提交 · 单号 EX-20261011-007","ps-done",okIcon()));
+  toast("ok","换新申请已提交","预计 3–5 个工作日完成，进度将短信通知您");
+  addMsg("ai","您的换新申请已提交，服务单号 <b>EX-20261011-007</b>，双向免费物流已安排，3–5 个工作日完成，进度将短信通知您。");
+}
+function okIcon(){return '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>';}
+function clockIcon(){return '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>';}
+
+/* 后端链路 */
+function chainBase(){
+  const nodes=document.getElementById("chainNodes");
+  const ics=['<path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/>',
+    '<path d="M9 12l2 2 4-4"/><path d="M21 12c0 5-3.5 7.5-8.5 9C7.5 19.5 4 17 4 12V5l8.5-3L21 5z"/>',
+    '<rect x="4" y="11" width="16" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',
+    '<rect x="3" y="4" width="18" height="16" rx="3"/><path d="M3 10h18"/>'];
+  let html="";
+  CHAIN.forEach((c,i)=>{
+    html+='<div class="cnode" id="cn'+i+'"><span class="ci"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'+ics[i]+'</svg></span><span class="cl">'+c+'</span></div>';
+    if(i<CHAIN.length-1) html+='<span class="cline" id="cl'+i+'"></span>';
+  });
+  nodes.innerHTML=html;
+}
+function renderChain(mode, upto){
+  chainBase();
+  const status=(()=>{return null;})();
+  if(mode==="idle"){return;}
+  if(mode==="run"){
+    document.getElementById("cn0").classList.add("done");
+    document.getElementById("cl0").classList.add("done");return;
+  }
+  if(mode==="done"){
+    for(let i=0;i<CHAIN.length;i++){document.getElementById("cn"+i).classList.add("done");if(i<CHAIN.length-1)document.getElementById("cl"+i).classList.add("done");}
+    return;
+  }
+  if(mode==="block"){
+    for(let i=0;i<upto;i++){document.getElementById("cn"+i).classList.add("done");if(i<upto-1)document.getElementById("cl"+i).classList.add("done");}
+    document.getElementById("cn"+upto).classList.add("block");
+  }
+}
+
+/* ================= 自进化中心 ================= */
+/*
+  说明（演示）：
+  - 左侧 evoChatBody 只呈现客户可见内容；任何版本 / 指纹 / 归因 / 工号 / 权限字样只出现在右侧 evoInner。
+  - evo.kb：策略版本表（内部）；evo.ledger：进化台账（内部时间线）。
+*/
+let evo = {scene:"s1"};
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+
+function autoQuery(){
+  const h=location.hash, i=h.indexOf("?auto=");
+  return i>=0 ? h.slice(i+6).split("&")[0] : null;
+}
+function initEvo(){
+  const aq=autoQuery();
+  if(aq){ evo.inited=true; resetEvo(aq); autoPlay(aq); return; }
+  if(!evo.inited){ evo.inited=true; resetEvo("s1",true); }
+  else renderEvo();
+}
+function autoPlayCurrent(){ autoPlay(evo.scene); }
+function findActBtn(act){
+  const bs=document.querySelectorAll("#evoChatBody button");
+  for(let k=bs.length-1;k>=0;k--){
+    const oc=bs[k].getAttribute("onclick")||"";
+    if(oc.indexOf("'"+act+"'")>=0) return bs[k];
+  }
+  return null;
+}
+function clickAct(act){ const b=findActBtn(act); if(b) evoAct(act,b); }
+async function autoPlay(scene){
+  resetEvo(scene);
+  await sleep(900);
+  if(scene==="s1"){
+    evoChoose("s1_q","夜视画面模糊、发黑"); await sleep(1200);
+    evoChoose("s1_card1","重启过了，还是这样"); await sleep(1300);
+    clickAct("s1_done1"); await sleep(1500);
+    await s1Reopen(); await sleep(900);
+    clickAct("s1_accept2"); await sleep(500);
+  }else if(scene==="s2"){
+    evoChoose("s2_q","摄像头完全开不了机"); await sleep(1200);
+    evoChoose("s2_verify","换过了，仍然开不了机"); await sleep(2300);
+    clickAct("s2_accept"); await sleep(700);
+  }else{
+    evoChoose("s3_q","夜视反复异常，按之前指导没解决，我要退款"); await sleep(1300);
+    clickAct("s3_human"); await sleep(1100);
+    evoAct("s3_pickB"); await sleep(700);
+    evoAct("s3_publish"); await sleep(1100);
+    await s3Next(); await sleep(1000);
+    clickAct("s3_acceptB"); await sleep(500);
+  }
+}
+function resetEvo(scene,silent){
+  evo.scene=scene;
+  evo.session=1; evo.hit="v1"; evo.signal="—"; evo.caseState="会话进行中";
+  evo.humanPick="B"; evo.humanDone=false; evo.reopened=false; evo.planSeq=0;
+  evo.ledger=[];
+  if(scene==="s1"){
+    evo.finger="夜视异常（软排障子类）";
+    evo.kb={v1:"软排障：擦拭镜头 / 重启 / App 重开夜视", v2:null, v2src:null, v2status:null, reuse:0, keep:null};
+  }else if(scene==="s2"){
+    evo.finger="硬件故障（无法开机）";
+    evo.kb={v1:"保修换新（0 元 / 3–5 日）", v2:null, v2src:null, v2status:null, reuse:0, keep:true};
+  }else{
+    evo.finger="夜视反复异常（AI 初判=直接退款）";
+    evo.kb={v1:"AI 初判方案 A：直接退款", v2:null, v2src:null, v2status:null, reuse:0, keep:null};
+  }
+  document.querySelectorAll(".demo-scn").forEach(b=>b.classList.remove("active"));
+  const btn=document.getElementById("scnbtn-"+scene); if(btn) btn.classList.add("active");
+  const body=document.getElementById("evoChatBody"), opt=document.getElementById("evoChatOptions");
+  if(body) body.innerHTML="";
+  if(opt) opt.innerHTML="";
+  if(scene==="s1") buildS1();
+  else if(scene==="s2") buildS2();
+  else buildS3();
+  renderEvoInner();
+}
+function renderEvo(){ // 切回本页时按当前状态重绘
+  renderEvoInner();
+}
+
+/* ---- 左：客户对话渲染 ---- */
+function evoAdd(role,html){
+  const b=document.getElementById("evoChatBody");
+  const d=document.createElement("div"); d.className="msg "+role; d.innerHTML=html;
+  b.appendChild(d); b.scrollTop=b.scrollHeight; return d;
+}
+function evoTyping(cb){
+  const b=document.getElementById("evoChatBody");
+  const d=document.createElement("div"); d.className="msg ai";
+  d.innerHTML='<span class="typing"><span></span><span></span><span></span></span>';
+  b.appendChild(d); b.scrollTop=b.scrollHeight;
+  setTimeout(()=>{d.remove();cb();},600);
+}
+function evoOptions(arr){
+  document.getElementById("evoChatOptions").innerHTML=
+    arr.map(o=>'<button class="chip '+(o.cls||"")+'" onclick="evoChoose(\''+o.n+'\',\''+(o.t||"").replace(/'/g,"")+'\')">'+o.t+'</button>').join("");
+}
+function evoChoose(n,label){
+  evoAdd("user",label);
+  document.getElementById("evoChatOptions").innerHTML="";
+  evoTyping(()=>evoStep(n));
+}
+function evoSplit(text){ evoAdd("split",text); }
+/* 客户版方案卡（不含任何内部判据） */
+function evoPlanCard(cfg){
+  evo.planSeq++;
+  const d=document.createElement("div"); d.className="msg plan";
+  d.id="evoplancard-"+evo.planSeq;
+  const foot=cfg.actions.map(a=>'<button class="btn '+(a.primary?'btn-primary':'btn-ghost')+' btn-sm" onclick="evoAct(\''+a.act+'\',this)">'+a.label+'</button>').join("");
+  d.innerHTML='<div class="plan-card recommend">'+
+    '<div class="plan-top"><h4>'+cfg.title+'</h4><span class="spacer"></span>'+
+      '<span class="tag '+(cfg.tagCls||'t-green')+'"><span class="dot"></span>'+cfg.tag+'</span></div>'+
+    '<div class="plan-mid">'+
+      '<div class="plan-meta"><span class="mk">费用</span><span class="mv">'+cfg.fee+'</span></div>'+
+      '<div class="plan-meta"><span class="mk">时效</span><span class="mv">'+cfg.eta+'</span></div>'+
+      '<div class="plan-desc">'+cfg.desc+'</div>'+
+    '</div><div class="plan-foot" data-foot>'+foot+'</div></div>';
+  document.getElementById("evoChatBody").appendChild(d); d.scrollIntoView({block:"end"});
+  return d;
+}
+function evoSpendCard(btn,stateText,cls){
+  if(btn){ const card=btn.closest(".plan-card"); if(card){ card.classList.add("spent");
+    const foot=card.querySelector("[data-foot]");
+    if(foot) foot.innerHTML='<span class="plan-state '+cls+'">'+stateText+'</span>';
+  }}
+}
+function evoLedger(t,d,cls){ evo.ledger.push({t,d,cls:cls||""}); renderEvoInner(); }
+
+/* ---- 路径 1：自助咨询 · 复联自动换方案 ---- */
+function buildS1(){
+  evoAdd("ai","您好，我是 eufy 智能售后助手，请问您的摄像头遇到了什么问题？");
+  evoOptions([{t:"夜视画面模糊、发黑",n:"s1_q"},{t:"红外夜视灯不亮",n:"s1_q"}]);
+}
+function evoStep(n){
+  if(n==="s1_q"){
+    evoAdd("ai","抱歉给您带来不便。请问您是否已经尝试过重启摄像头？");
+    evoOptions([{t:"重启过了，还是这样",n:"s1_card1"},{t:"还没重启",n:"s1_card1"}]);
+  }
+  if(n==="s1_card1"){
+    evo.caseState="待结果（观察窗内）"; evo.hit="v1";
+    evoLedger("Case 归档 · 会话①","问题指纹【"+evo.finger+"】命中策略 <b>v1</b>，会话结案，状态＝待结果","");
+    evoPlanCard({
+      tag:"可立即办理", tagCls:"t-green",
+      title:"夜视自助恢复指引", fee:"免费", eta:"约 5 分钟",
+      desc:"建议依次操作：① 用干净软布擦拭镜头与红外灯区；② 重启摄像头并等待 2 分钟；③ 打开 eufy Security App，关闭后重新开启「夜视 / 红外」模式。多数夜视异常可由此恢复，无需寄回。",
+      actions:[{label:"我先按此操作",act:"s1_done1",primary:true},{label:"操作后没有解决",act:"s1_done1b"}]
+    });
+  }
+  if(n==="s2_q"){
+    evoAdd("ai","抱歉给您带来不便。请问更换电源插座 / 充电线后，摄像头仍然完全无法开机吗？");
+    evoOptions([{t:"换过了，仍然开不了机",n:"s2_verify"}]);
+  }
+  if(n==="s2_verify"){
+    const h=evoAdd("ai",'<span class="verify-list"><span class="verify-item run"><span class="vi">⏳</span>正在核实订单与保修资格…</span></span>');
+    evo.caseState="核验中"; renderEvoInner();
+    setTimeout(()=>{
+      h.innerHTML='<span class="verify-list"><span class="verify-item done"><span class="vi">'+okIcon()+'</span>已核实：符合保修（在保）</span></span>';
+      s2Card();
+    },900);
+  }
+  if(n==="s3_q"){
+    evo.caseState="待结果（观察窗内）"; evo.hit="v1";
+    evoLedger("Case 归档 · 会话①","问题指纹【"+evo.finger+"】命中 AI 初判策略 <b>v1（方案A 直接退款）</b>，等待客户选择","");
+    evoPlanCard({
+      tag:"需专员确认", tagCls:"t-orange",
+      title:"申请退款", fee:"全额 2199 元", eta:"专员确认后 3–5 日",
+      desc:"根据您描述的情况，可为您登记退款，需专员进一步确认后办理。",
+      actions:[{label:"不满意，转人工处理",act:"s3_human",primary:true},{label:"先不退款，再想想",act:"s3_human"}]
+    });
+  }
+}
+function evoAct(act,btn){
+  if(!btn || !btn.closest){ btn=findActBtn(act); }
+  if(act==="s1_done1"||act==="s1_done1b"){
+    if(act==="s1_done1") evoAdd("user","好的，我先按你说的操作试试");
+    else evoAdd("user","我操作了，好像还是不行");
+    evoSpendCard(btn,"本次指导已结束","ps-wait",clockIcon());
+    evoAdd("ai","好的，建议您先按指引操作。若操作后问题仍然存在，欢迎随时再联系我们，届时将直接为您安排更彻底的处理，无需重复排查。");
+    evoOptions([]);
+    evo.caseState="待结果（观察窗 10 分钟）";
+    renderEvoInner();
+  }
+
+  /* 路径1：时间快进 → 复联 */
+  if(act==="s1_reopen"){ s1Reopen(); }
+
+  if(act==="s1_accept2"){
+    evoAdd("user","好的，开始深度处理吧");
+    evoSpendCard(btn,"已为您启动深度处理","ps-done",okIcon());
+    evoAdd("ai","已为您启动夜视深度处理：先引导远程红外与固件复位；若仍异常，将直接为您发起换新预检，无需再从基础排查开始。处理进度会通过 App 通知您。");
+    evoOptions([]);
+    evo.caseState="处理中（v2）"; renderEvoInner();
+  }
+
+  /* 路径2：接受换新 */
+  if(act==="s2_accept"){
+    evoAdd("user","接受换新并提交");
+    evoSpendCard(btn,"已提交 · 单号 EX-20261011-009","ps-done",okIcon());
+    evoAdd("ai","您的换新申请已提交，服务单号 <b>EX-20261011-009</b>，双向免费物流已安排，3–5 个工作日完成，进度将短信通知您。");
+    evoOptions([]);
+    evo.signal="真实回执成功 + 观察窗无复联";
+    evo.caseState="Good（经核实解决）";
+    evoLedger("执行回执回传","换新工单创建成功，回执单号 EX-20261011-009（非口头承诺）","green");
+    evoLedger("Case 判定为 Good","观察窗内无复联、有真实回执 → Case＝Good；策略 <b>保持 v1 不变</b>（成功不轻易改）","green");
+    renderEvoInner();
+  }
+
+  /* 路径3：转人工 → 人工裁决在右栏 */
+  if(act==="s3_human"){
+    evoAdd("user","我不满意，帮我转人工");
+    evoSpendCard(btn,"已转接人工","ps-wait",clockIcon());
+    evoAdd("ai","已为您转接人工专员，您此前提供的信息和已尝试操作已同步，无需重复描述，请稍候。");
+    evoOptions([]);
+    evo.signal="客户拒绝 AI 方案 · 转人工";
+    evo.caseState="待人工接管";
+    evoLedger("触发转人工","客户不接受 AI 方案 A（直接退款），案件转人工接续","red");
+    renderEvoInner();
+  }
+  if(act==="s3_pickB"||act==="s3_pickA"){
+    evo.humanPick = act==="s3_pickB"?"B":"A";
+    renderEvoInner();
+  }
+  if(act==="s3_publish"){ s3Publish(); }
+  if(act==="s3_next"){ s3Next(); }
+  if(act==="s3_acceptB"){
+    evoAdd("user","好的，就按这个方案处理");
+    evoSpendCard(btn,"已为您安排","ps-done",okIcon());
+    evoAdd("ai","已为您安排远程升级与配件补发，全程免费，配件预计 1–2 个工作日发出，进度将通过 App 通知您。");
+    evoOptions([]);
+    evo.caseState="处理中（命中人工策略 v2）";
+    renderEvoInner();
+  }
+  if(act==="rollback"){ evoRollback(); }
+}
+
+/* 路径1 复联自动进化（右栏自动运转 + 左栏第二会话） */
+async function s1Reopen(){
+  evo.reopened=true;
+  evo.signal="同指纹复联（10 分钟观察窗内）";
+  evo.caseState="上一 Case 复核中";
+  renderEvoInner();
+  await sleep(550);
+  evoLedger("检测到复联","同一客户 / 同一问题指纹在 10 分钟窗内再次来访","red");
+  await sleep(700);
+  evoLedger("上一 Case 自动翻案为 Bad","信号＝复联：方案①未真正解决；无需人工读对话，系统自动判定","red");
+  await sleep(700);
+  evoLedger("自动归因（S2）","根因归类：知识 / 分诊——软排障对该夜视子类无效，应直接进入深度处理","purple");
+  await sleep(700);
+  evo.kb.v2="深度处理：红外 / 固件复位；仍异常直接换新预检";
+  evo.kb.v2src="复联自动升级"; evo.kb.v2status="已发布（可回滚）";
+  evo.hit="v2";
+  evoLedger("策略发布 v1 → v2（S3/S4）","系统自动生成并发布改进策略；历史案例回放通过，支持一键回滚","green");
+  evo.caseState="新会话命中 v2";
+  renderEvoInner();
+  await sleep(500);
+
+  /* 左栏：第二会话（客户语言，不暴露复联/版本） */
+  evoSplit("10 分钟后 · 您再次来访");
+  evoAdd("user","还是看不清，按你说的做了也没用");
+  await sleep(400);
+  evoTyping(()=>{
+    evoAdd("ai","欢迎回来。看到您之前反馈过夜视异常、且自助操作后仍未恢复，这次我直接为您安排更彻底的处理，<b>不需要您再重复排查</b>。");
+    evo.kb.reuse=1;
+    evoLedger("新会话复用 v2","第二次会话直接采用策略 v2，已复用 <b>1</b> 次（客户侧无感知）","green");
+    evoPlanCard({
+      tag:"可立即办理", tagCls:"t-green",
+      title:"夜视深度处理 · 升级方案", fee:"免费", eta:"远程约 10 分钟 / 必要时 3–5 日换新",
+      desc:"为您跳过基础排查，直接进行：① 远程引导红外组件与固件复位；② 远程检测红外夜视是否正常；③ 若仍异常，直接发起换新预检，无需再从擦拭、重启开始。",
+      actions:[{label:"接受，开始深度处理",act:"s1_accept2",primary:true}]
+    });
+    evo.caseState="处理中（v2）";
+    renderEvoInner();
+  });
+}
+
+/* 路径2 剧本 */
+function buildS2(){
+  evoAdd("ai","您好，我是 eufy 智能售后助手，请问您的摄像头遇到了什么问题？");
+  evoOptions([{t:"摄像头完全开不了机",n:"s2_q"}]);
+}
+function s2Card(){
+  evo.caseState="待客户确认"; evo.hit="v1";
+  evoLedger("Case 归档 · 会话①","问题指纹【"+evo.finger+"】命中策略 <b>v1（保修换新）</b>，等待客户确认","");
+  evoPlanCard({
+    tag:"确认后办理", tagCls:"t-blue",
+    title:"保修换新摄像头", fee:"0 元", eta:"3–5 个工作日",
+    desc:"经核实符合保修条件，我们将回收故障摄像头并寄出新机，双向物流免费、上门取件，无需您承担费用。",
+    actions:[{label:"接受换新并提交",act:"s2_accept",primary:true}]
+  });
+}
+
+/* 路径3 剧本 */
+function buildS3(){
+  evoAdd("ai","您好，我是 eufy 智能售后助手，请问您遇到了什么问题？");
+  evoOptions([{t:"夜视反复异常，按之前指导没解决，我要退款",n:"s3_q"}]);
+}
+function s3Publish(){
+  if(evo.humanPick!=="B"){ toast("info","演示主线","请选择人工推荐方案 B 再发布"); return; }
+  evo.humanDone=true;
+  evo.kb.v2="人工方案 B：先远程升级固件 + 补发红外配件（对症、成本更低）";
+  evo.kb.v2src="人工坐席 A1024 改判"; evo.kb.v2status="已发布（人工审核）";
+  evo.hit="v2";
+  evo.signal="人工改判 · 策略已发布";
+  evo.caseState="人工策略 v2 已发布";
+  evoLedger("人工改判","坐席 A1024 否决 AI 方案 A（直接退款），原 Case 标记为 <b>Bad（信号＝人工改判）</b>","red");
+  evoLedger("人工经验入库","方案 B 沉淀为标准策略 <b>v1 → v2</b>，来源坐席 A1024，经人工审核发布","purple");
+  renderEvoInner();
+  toast("ok","人工策略已发布","后续相似案件将优先采用方案 B");
+}
+async function s3Next(){
+  evo.session=2;
+  renderEvoInner();
+  evoSplit("次日 · 另一位客户来访（相似问题）");
+  evoAdd("user","我这个摄像头夜视也经常失灵，之前自己折腾过没好");
+  await sleep(400);
+  evoTyping(()=>{
+    evoAdd("ai","了解您的情况，为您直接安排更对症的处理方式，无需从基础排查开始。");
+    evo.kb.reuse=1;
+    evoLedger("相似案件命中人工策略","新客户相似问题自动采用人工沉淀的 <b>v2（方案B）</b>，已复用 <b>1</b> 次","green");
+    evoPlanCard({
+      tag:"可立即办理", tagCls:"t-green",
+      title:"远程修复 + 配件补发", fee:"免费", eta:"远程约 10 分钟 / 配件 1–2 日达",
+      desc:"为您安排：① 远程指导升级摄像头固件、重置夜视模块；② 如检测为红外配件问题，免费为您补发对应配件，无需直接退款或寄回整机。",
+      actions:[{label:"好的，按此处理",act:"s3_acceptB",primary:true}]
+    });
+    evo.caseState="处理中（命中人工策略 v2）";
+    renderEvoInner();
+  });
+}
+function evoRollback(){
+  evo.kb.v2status="已回滚（恢复 v1）";
+  evo.hit="v1";
+  evoLedger("策略回滚","负责人一键回滚至上一版本快照，服务立即恢复 v1 行为（受控进化）","gray");
+  renderEvoInner();
+  toast("warn","已回滚到 v1","演示受控发布：任何改进均可回滚");
+}
+
+/* ---- 右：内部面板渲染 ---- */
+function renderEvoInner(){
+  const box=document.getElementById("evoInner");
+  if(!box) return;
+  const kb=evo.kb;
+  const hitTag = evo.hit==="v2"
+    ? '<span class="tag t-green"><span class="dot"></span>当前命中 v2</span>'
+    : '<span class="tag t-gray"><span class="dot"></span>当前命中 v1</span>';
+
+  /* 策略库表 */
+  let v2cell='<span class="ver v1">未生成</span>';
+  if(kb.v2){
+    const manual = kb.v2src && kb.v2src.indexOf("人工")>=0;
+    const rolled = kb.v2status && kb.v2status.indexOf("回滚")>=0;
+    const cls = rolled?"rolled":(manual?"v2 manual":"v2");
+    v2cell='<div class="ver-flow"><span class="ver '+cls+'">v2 · '+kb.v2status+'</span>'+
+           '<span style="font-size:11.5px;color:var(--sub)">来源：'+kb.v2src+'｜已复用 '+kb.reuse+' 次</span>'+
+           (!rolled?'<button class="mini-link warn" onclick="evoAct(\'rollback\')">回滚 v1</button>':'')+'</div>';
+  }
+  const kbTable=
+    '<table class="kb-table"><thead><tr><th>问题指纹</th><th>策略版本演进</th></tr></thead><tbody>'+
+      '<tr><td style="font-weight:600">'+evo.finger+'</td><td>'+
+        '<div class="ver-flow" style="margin-bottom:8px"><span class="ver v1">v1</span><span style="font-size:12px">'+kb.v1+'</span></div>'+
+        '<div>'+v2cell+'</div>'+
+      '</td></tr>'+
+    '</tbody></table>';
+
+  /* 人工裁决区（仅路径3、转人工后、未发布） */
+  let humanHTML="";
+  if(evo.scene==="s3" && evo.caseState==="待人工接管" && !evo.humanDone){
+    humanHTML=
+      '<div class="card"><div class="card-h"><h3>人工坐席裁决</h3><span class="spacer"></span><span class="inner-badge">B 端 · 内部</span></div>'+
+      '<div class="card-b"><div class="human-box">'+
+        '<h5>坐席 A1024 接续：AI 原方案 A＝直接退款，请选择人工复核结论</h5>'+
+        '<div class="opt '+(evo.humanPick==="A"?"sel":"")+'" onclick="evoAct(\'s3_pickA\')"><b>方案 A</b>：维持直接退款（与 AI 一致，不产生改进）</div>'+
+        '<div class="opt '+(evo.humanPick==="B"?"sel":"")+'" onclick="evoAct(\'s3_pickB\')"><b>方案 B</b>：先远程升级固件 + 补发红外配件（对症、成本更低，无需退款 / 寄回整机）</div>'+
+        '<button class="btn btn-purple btn-block btn-sm" onclick="evoAct(\'s3_publish\')">采纳方案 B 并发布为标准策略</button>'+
+      '</div></div></div>';
+  }
+
+  /* 演示推进（下一步） */
+  let nextHTML="";
+  if(evo.scene==="s1" && evo.caseState.indexOf("待结果")>=0 && !evo.reopened){
+    nextHTML='<div class="next-box"><p>① 会话①已结案为「待结果」。客户不会主动点差评，但会用「再次来访」投票——推进时间观察复联：</p>'+
+      '<button class="btn btn-primary btn-sm" onclick="evoAct(\'s1_reopen\')">⏩ 模拟 10 分钟后 · 同一客户再次咨询</button></div>';
+  }
+  if(evo.scene==="s3" && evo.humanDone && evo.session===1){
+    nextHTML='<div class="next-box"><p>人工策略 v2 已发布。验证它是否在「下一次相似案件」中被自动优先采用：</p>'+
+      '<button class="btn btn-purple btn-sm" onclick="evoAct(\'s3_next\')">▶ 次日 · 一位相似客户来访</button></div>';
+  }
+
+  /* 台账时间线 */
+  const ledgerHTML = evo.ledger.length
+    ? evo.ledger.map(l=>'<div class="tl-i '+l.cls+'"><div class="tt">'+l.t+'</div><div class="td">'+l.d+'</div></div>').join("")
+    : '<div style="font-size:12.5px;color:var(--sub)">暂无进化事件，按左侧对话推进后将在此实时生成。</div>';
+
+  box.innerHTML =
+    '<div class="card"><div class="card-h"><h3>实时判定</h3><span class="spacer"></span><span class="inner-badge">内部视角 · 不对客户展示</span></div>'+
+      '<div class="card-b">'+
+        '<div class="ip-kv"><span class="k">问题指纹</span><span class="v">'+evo.finger+'</span></div>'+
+        '<div class="ip-kv"><span class="k">当前会话</span><span class="v">第 '+evo.session+' 次</span></div>'+
+        '<div class="ip-kv"><span class="k">Case 状态</span><span class="v">'+evo.caseState+'</span></div>'+
+        '<div class="ip-kv"><span class="k">命中版本</span><span class="v">'+hitTag+'</span></div>'+
+        '<div class="ip-kv"><span class="k">触发信号</span><span class="v" style="font-size:12.5px">'+evo.signal+'</span></div>'+
+      '</div></div>'+
+
+    (nextHTML?'<div class="card"><div class="card-b" style="padding-bottom:20px">'+nextHTML+'</div></div>':'')+
+
+    '<div class="card"><div class="card-h"><h3>策略库 · 版本演进</h3><span class="spacer"></span><span class="inner-badge">受控发布 · 可回滚</span></div>'+
+      '<div class="card-b">'+kbTable+'</div></div>'+
+
+    humanHTML+
+
+    '<div class="card"><div class="card-h"><h3>进化台账</h3><span class="spacer"></span><span class="inner-badge">服务 → 改进 → 再服务</span></div>'+
+      '<div class="card-b"><div class="tl">'+ledgerHTML+'</div></div></div>';
+}
+
+/* ================= 客服工作台 ================= */
+let agentInit=false, activeCase=null, phoneRevealed=false, auditLogs=[];
+function initAgent(){
+  if(!agentInit){
+    agentInit=true;
+    auditLogs=[{t:"系统",d:"案件 TK-20261008-001 由 AI 转入队列，状态：待接管",cls:""}];
+  }
+  renderCaseList();
+  if(!activeCase) selectCase("TK-20261008-001");
+}
+function renderCaseList(){
+  const box=document.getElementById("caseList");
+  box.innerHTML=CASES.map(c=>{
+    const stc = c.status==="待接管"?"t-orange":c.status==="处理中"?"t-blue":"t-gray";
+    return '<div class="case-item '+(activeCase===c.id?'sel':'')+'" onclick="selectCase(\''+c.id+'\')">'+
+      '<div class="ci-top"><span class="cid">'+c.id+'</span><span class="tag '+stc+'"><span class="dot"></span>'+c.status+'</span></div>'+
+      '<div class="ci-desc">'+c.name+' · '+c.desc+'</div></div>';
+  }).join("");
+}
+function selectCase(id){
+  const c=CASES.find(x=>x.id===id);
+  if(!c.mine){
+    toast("err","无权查看该案件","该案件未分配给您，已触发案件级隔离");
+    addAudit("权限拦截","尝试访问未分配案件 "+id+"，已拒绝","red");
+    return;
+  }
+  activeCase=id; phoneRevealed=false;
+  renderCaseList(); renderTakeover();
+}
+function lookupTicket(){
+  const v=document.getElementById("lookupInput").value.trim();
+  if(!v){toast("info","请输入工单号","");return;}
+  const c=CASES.find(x=>x.id===v);
+  if(c&&c.mine){selectCase(v);toast("ok","校验通过",v+" 属于您名下案件");}
+  else{
+    toast("err","归属 / 权限校验失败",v+" 不在您的可访问范围，已拒绝并记录");
+    addAudit("归属校验","查询 "+v+" 不属于当前坐席，已拦截","red");
+  }
+}
+function fact(k,v,source,conf){
+  return '<div class="fact"><div class="fk">'+k+'</div><div class="fv">'+v+'</div><div class="conf">来源：'+source+' · 置信度 '+conf+'</div></div>';
+}
+function renderTakeover(){
+  const card=document.getElementById("takeoverCard");
+  card.innerHTML=
+    '<div class="tk-head">'+
+      '<span class="av agent" style="width:46px;height:46px;border-radius:13px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18M5 21V7l7-4 7 4v14"/></svg></span>'+
+      '<div style="flex:1"><h2>人工接续卡 · '+CUSTOMER.name+' 摄像头夜视异常申请退款</h2>'+
+      '<div class="meta"><span class="tag t-orange"><span class="dot"></span>待接管</span><span class="tag t-blue"><span class="dot"></span>App 在线</span><span class="tag t-purple"><span class="dot"></span>情绪：平稳</span><span class="tag t-green"><span class="dot"></span>非召回型号</span></div></div>'+
+    '</div>'+
+    '<div class="tk-sec"><h4>已核实事实（带来源与置信度）</h4>'+
+      '<div class="fact-grid">'+
+        fact("用户 / 等级",CUSTOMER.name+" · "+CUSTOMER.level,"订单系统","98%")+
+        fact("联系方式",'<span class="masked" id="phoneVal">'+CUSTOMER.maskedPhone+'</span> <button class="reveal-btn" onclick="revealPhone()">查看</button>',"账号系统","96%")+
+        fact("订单号",ORDER.id,"订单系统","99%")+
+        fact("产品 / 型号",ORDER.product,"订单系统","99%")+
+        fact("购买日期 / 渠道",ORDER.purchase+" · "+ORDER.channel,"订单系统","98%")+
+        fact("保修资格",'<span style="color:var(--green)">符合保修（在保）</span>',"规则引擎","97%")+
+      '</div></div>'+
+    '<div class="tk-sec"><h4>已尝试动作（AI 引导）</h4><div class="tl">'+
+        '<div class="tl-i"><div class="tt">重启设备并擦拭镜头</div><div class="td">夜视仍异常，排除镜头脏污</div></div>'+
+        '<div class="tl-i"><div class="tt">重连 2.4GHz Wi-Fi / 检查路由</div><div class="td">无改善，网络正常</div></div>'+
+        '<div class="tl-i"><div class="tt">核验进水 / 摔落与安装环境</div><div class="td">用户确认正常安装、无进水磕碰</div></div>'+
+      '</div></div>'+
+    '<div class="tk-sec"><h4>客户方案升级路径</h4><div class="tl">'+
+        '<div class="tl-i"><div class="tt">Tier 1 排障 · 补发配件</div><div class="td">客户反馈无法解决，已跳过</div></div>'+
+        '<div class="tl-i"><div class="tt">Tier 2 保修换新</div><div class="td">客户反馈未解决，已跳过</div></div>'+
+        '<div class="tl-i"><div class="tt">Tier 3 申请退款（当前申请）</div><div class="td" style="color:var(--orange)">AI 无权执行，转主管审批</div></div>'+
+      '</div></div>'+
+    '<div class="tk-sec"><h4>转人工原因 / 待决问题</h4>'+
+      '<div class="reason-box">客户经前两类自助方式均确认无效，最终申请退款，AI 无权执行，需主管人工审批。<br><b style="color:var(--purple)">人工改判后将沉淀为标准策略，供后续相似案件优先采用（见「自进化中心」路径③）。</b></div></div>'+
+    '<div class="action-bar">'+
+      '<button class="btn btn-primary" onclick="submitTier3()">提交主管审批退款（Tier 3）</button>'+
+      '<button class="btn btn-soft" onclick="approveTier2()">改判为保修换新（Tier 2）</button>'+
+      '<button class="btn btn-ghost" onclick="rejectCase()">驳回并改判</button>'+
+    '</div>'+
+    '<div class="audit"><h4 style="font-size:13px;font-weight:800;color:#565e6b;margin-bottom:14px;text-transform:uppercase;letter-spacing:.6px">审计日志（可追溯）</h4><div class="tl" id="auditTl"></div></div>';
+  renderAudit();
+}
+function revealPhone(){
+  if(phoneRevealed) return;
+  openModal(
+    '<div class="modal-h"><span class="mic" style="background:var(--blue-50);color:var(--blue)"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10 7Z"/><circle cx="12" cy="12" r="3"/></svg></span><div><h3>查看完整联系方式</h3><p>该操作将记录审计日志（操作人、时间、案件）</p></div></div>'+
+    '<div class="modal-b"><div class="field"><label>查看原因（必填）</label><select class="input"><option>需要电话联系用户核实</option><option>外呼告知处理进度</option><option>其他</option></select></div></div>'+
+    '<div class="modal-f"><button class="btn btn-ghost" onclick="closeModal()">取消</button><button class="btn btn-primary" onclick="confirmReveal()">确认查看</button></div>');
+}
+function confirmReveal(){
+  closeModal(); phoneRevealed=true;
+  document.getElementById("phoneVal").innerHTML=CUSTOMER.phone;
+  toast("info","已显示完整号码","本次查看已记入审计日志");
+  addAudit("敏感字段查看","坐席 A1024 查看完整手机号（用于联系用户）","");
+}
+function approveTier2(){
+  openModal(
+    '<div class="modal-h"><span class="mic" style="background:var(--green-50);color:var(--green)"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span><div><h3>改判为摄像头保修换新</h3><p>Tier 2 · 费用 0 元 · 时效 3–5 个工作日</p></div></div>'+
+    '<div class="modal-b"><div class="info-row"><span class="k">办理动作</span><span class="v">改判 + 创建换新工单</span><span class="spacer"></span></div>'+
+    '<div class="info-row"><span class="k">审批人</span><span class="v">一线坐席 A1024</span><span class="spacer"></span></div></div>'+
+    '<div class="modal-f"><button class="btn btn-ghost" onclick="closeModal()">取消</button><button class="btn btn-primary" onclick="confirmApprove()">确认改判并办理</button></div>');
+}
+function confirmApprove(){
+  closeModal();
+  toast("ok","已改判为保修换新","改判已沉淀为标准策略，后续相似案件优先采用");
+  addAudit("人工改判执行","坐席 A1024 改判并执行 Tier 2 换新，策略进入自进化库","purple");
+}
+function submitTier3(){
+  openModal(
+    '<div class="modal-h"><span class="mic" style="background:var(--purple-50);color:var(--purple)"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 11h-6M22 15h-6"/></svg></span><div><h3>主管审批（Tier 3）</h3><p>全额退款 2199 元</p></div></div>'+
+    '<div class="modal-b">'+
+      '<div class="info-row"><span class="k">案件</span><span class="v">TK-20261008-001</span><span class="spacer"></span></div>'+
+      '<div class="field"><label>主管工号</label><input class="input" value="A001" style="font-weight:600"></div>'+
+      '<div class="field"><label>审批口令</label><input class="input" type="password" value="********"></div>'+
+      '<div class="reason-box" style="background:var(--purple-50);border-color:#d6ccfb;color:var(--purple)">一线坐席无此权限，验证主管身份后方可批准退款。</div>'+
+    '</div>'+
+    '<div class="modal-f"><button class="btn btn-ghost" onclick="closeModal()">取消</button><button class="btn btn-soft" onclick="closeModal();toast(\'info\',\'已退回补充\',\'\')">退回</button><button class="btn btn-primary" onclick="confirmTier3()">主管批准退款</button></div>');
+}
+function confirmTier3(){
+  closeModal();
+  toast("ok","主管已批准退款","2199 元将在 3–5 个工作日原路退回");
+  addAudit("Tier 3 审批","主管 A001 验证身份后批准全额退款","purple");
+}
+function rejectCase(){
+  openModal(
+    '<div class="modal-h"><span class="mic" style="background:var(--orange-50);color:var(--orange)"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg></span><div><h3>驳回并改判 AI 方案</h3><p>改判将记录为 Bad Case 并进入自进化归因</p></div></div>'+
+    '<div class="modal-b">'+
+      '<div class="field"><label>改判原因</label><select class="input"><option>AI 方案与最新质保政策不符</option><option>应先远程排查 / 补发配件而非退款</option><option>分诊错误 / 信息核实有误</option><option>其他</option></select></div>'+
+      '<div class="field"><label>改判说明</label><textarea class="input" rows="3" placeholder="将作为自进化样本">该夜视故障应先远程升级固件排查，无需直接退款。</textarea></div>'+
+    '</div>'+
+    '<div class="modal-f"><button class="btn btn-ghost" onclick="closeModal()">取消</button><button class="btn btn-primary" onclick="confirmReject()">提交改判</button></div>');
+}
+function confirmReject(){
+  closeModal();
+  toast("warn","已记录为 Bad Case","改判进入自进化工作台，将自动归因并生成改进策略");
+  addAudit("人工改判","坐席 A1024 改判 AI 方案，已进入自进化归因","purple");
+}
+function addAudit(t,d,cls){
+  auditLogs.push({t,d,cls});
+  if(document.getElementById("auditTl")) renderAudit();
+}
+function renderAudit(){
+  const box=document.getElementById("auditTl");
+  if(!box) return;
+  box.innerHTML=auditLogs.map((l,i)=>'<div class="tl-i '+(l.cls||'')+'"><div class="tt">'+l.t+'</div><div class="td">'+l.d+' · 10-08 13:'+(20+i)+'</div></div>').join("");
+}
+
+renderRoute();
+</script>
+</body>
+</html>
